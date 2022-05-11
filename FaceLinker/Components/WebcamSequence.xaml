@@ -11,7 +11,7 @@
             <ColumnDefinition Width="1*"/>
             <ColumnDefinition Width="64"/>
         </Grid.ColumnDefinitions>
-        <ComboBox x:Name="WebcamSelector" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,0,0">
+        <ComboBox x:Name="WebcamSelector" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,0,0" SelectionChanged="WebcamSelector_SelectionChanged">
             <ComboBoxItem Content="No Webcam" />
         </ComboBox>
         <Button x:Name="ReloadButton" Grid.Column="1" Content="Refresh" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Click="ReloadButton_Click" Margin="5,0"/>

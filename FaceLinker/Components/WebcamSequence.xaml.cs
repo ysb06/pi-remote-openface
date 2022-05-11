@@ -24,7 +24,6 @@ namespace FaceLinker.Components
     /// </summary>
     public partial class WebcamSequence : UserControl
     {
-        private List<Webcam> webcams = new List<Webcam>();
         public WebcamSequence()
         {
             InitializeComponent();
@@ -37,17 +36,35 @@ namespace FaceLinker.Components
             ReloadCameras();
         }
 
-        public void ReloadCameras()
+        public async void ReloadCameras()
         {
-            webcams.Clear();
+            WebcamSelector.Items.Clear();
+            WebcamSelector.Items.Add("Loading...");
+            WebcamSelector.IsEnabled = false;
+            ReloadButton.IsEnabled = false;
 
-            string root = AppDomain.CurrentDomain.BaseDirectory;
-            var cameras = SequenceReader.GetCameras(root);
-            
-            foreach (var camera in cameras)
+            await Task.Run(() =>
             {
-                webcams.Add(new Webcam(camera));
-            }
+                Debug.WriteLine("Loading...");
+                string root = AppDomain.CurrentDomain.BaseDirectory;
+                var cameras = SequenceReader.GetCameras(root);
+                Debug.WriteLine("Loading Complete");
+
+                WebcamSelector.Dispatcher.BeginInvoke(() =>
+                {
+                    WebcamSelector.Items.Clear();
+                    foreach (var camera in cameras)
+                    {
+                        WebcamSelector.Items.Add(new Webcam(camera));
+                    }
+                    WebcamSelector.IsEnabled = true;
+                });
+                ReloadButton.Dispatcher.BeginInvoke(() =>
+                {
+                    ReloadButton.IsEnabled = true;
+                });
+                Debug.WriteLine("Task Finished");
+            });
         }
 
         public class Webcam
@@ -60,10 +77,21 @@ namespace FaceLinker.Components
             {
                 Id = cam_e.Item1;
                 Name = cam_e.Item2;
-                foreach(var item in cam_e.Item3) {
+                foreach (var item in cam_e.Item3)
+                {
                     Resolutions.Add(item);
                 }
             }
+
+            public override string ToString()
+            {
+                return Name;
+            }
+        }
+
+        private void WebcamSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            Debug.WriteLine("Changed");
         }
     }
 }
