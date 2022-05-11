@@ -34,7 +34,7 @@ namespace FaceLinker.Components
 
         private void ReloadButton_Click(object sender, RoutedEventArgs e)
         {
-            
+            ReloadCameras();
         }
 
         public void ReloadCameras()
@@ -52,14 +52,17 @@ namespace FaceLinker.Components
 
         public class Webcam
         {
-            int id = 0;
-            string name = string.Empty;
+            public int Id = 0;
+            public string Name = string.Empty;
+            public List<Tuple<int, int>> Resolutions = new List<Tuple<int, int>>();
 
             public Webcam(Tuple<int, string, List<Tuple<int, int>>, RawImage> cam_e)
             {
-                id = cam_e.Item1;
-                name = cam_e.Item2;
-                Debug.WriteLine(cam_e.Item3);
+                Id = cam_e.Item1;
+                Name = cam_e.Item2;
+                foreach(var item in cam_e.Item3) {
+                    Resolutions.Add(item);
+                }
             }
         }
     }

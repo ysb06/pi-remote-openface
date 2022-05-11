@@ -263,5 +263,7 @@ _NCrunch*
 
 # ------ End general ignores ----- #
 
-# Visual Studio Environment
+# Visual Studio and Visual Studio Code Environment
 .vs/
+.vscode/
+*.code-workspace
