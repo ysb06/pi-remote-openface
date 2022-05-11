@@ -20,10 +20,26 @@ using UtilitiesOF;
 namespace FaceLinker.Components
 {
     /// <summary>
-    /// WebcamSequence.xaml에 대한 상호 작용 논리
+    /// Webcam List Loader
     /// </summary>
     public partial class WebcamSequence : UserControl
     {
+        public event WebcamSelectedEventHandler WebcamSelected;
+
+        internal Webcam? CurrentSelectedWebcam
+        {
+            get
+            {
+                try
+                {
+                    return (Webcam)WebcamSelector.SelectedItem;
+                }
+                catch (InvalidCastException)
+                {
+                    return null;
+                }
+            }
+        }
         public WebcamSequence()
         {
             InitializeComponent();
@@ -40,17 +56,18 @@ namespace FaceLinker.Components
         {
             WebcamSelector.Items.Clear();
             WebcamSelector.Items.Add("Loading...");
+            WebcamSelector.SelectedIndex = 0;
             WebcamSelector.IsEnabled = false;
             ReloadButton.IsEnabled = false;
 
             await Task.Run(() =>
             {
-                Debug.WriteLine("Loading...");
+                Debug.WriteLine("Loading Camera List...");
                 string root = AppDomain.CurrentDomain.BaseDirectory;
                 var cameras = SequenceReader.GetCameras(root);
                 Debug.WriteLine("Loading Complete");
 
-                WebcamSelector.Dispatcher.BeginInvoke(() =>
+                Dispatcher.BeginInvoke(() =>
                 {
                     WebcamSelector.Items.Clear();
                     foreach (var camera in cameras)
@@ -58,40 +75,17 @@ namespace FaceLinker.Components
                         WebcamSelector.Items.Add(new Webcam(camera));
                     }
                     WebcamSelector.IsEnabled = true;
-                });
-                ReloadButton.Dispatcher.BeginInvoke(() =>
-                {
                     ReloadButton.IsEnabled = true;
                 });
-                Debug.WriteLine("Task Finished");
             });
-        }
-
-        public class Webcam
-        {
-            public int Id = 0;
-            public string Name = string.Empty;
-            public List<Tuple<int, int>> Resolutions = new List<Tuple<int, int>>();
-
-            public Webcam(Tuple<int, string, List<Tuple<int, int>>, RawImage> cam_e)
-            {
-                Id = cam_e.Item1;
-                Name = cam_e.Item2;
-                foreach (var item in cam_e.Item3)
-                {
-                    Resolutions.Add(item);
-                }
-            }
-
-            public override string ToString()
-            {
-                return Name;
-            }
         }
 
         private void WebcamSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            Debug.WriteLine("Changed");
+            if (CurrentSelectedWebcam != null)
+            {
+                WebcamSelected?.Invoke(this, CurrentSelectedWebcam);
+            }
         }
     }
 }

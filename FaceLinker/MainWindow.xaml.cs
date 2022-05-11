@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using FaceLinker.Components;
 
 namespace FaceLinker
 {
@@ -23,6 +24,11 @@ namespace FaceLinker
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void WebcamSelector_WebcamSelected(WebcamSequence sender, Webcam selection)
+        {
+            selection.SetActiveTarget(MainScreen);
         }
     }
 }

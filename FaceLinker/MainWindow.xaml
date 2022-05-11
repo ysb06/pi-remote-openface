@@ -13,7 +13,7 @@
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="25"/>
-            <RowDefinition Height="20"/>
+            <RowDefinition Height="23"/>
             <RowDefinition Height="*" MinHeight="220"/>
         </Grid.RowDefinitions>
         <Menu IsMainMenu="True" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="1" Margin="0, 0, 0, 5">
@@ -22,9 +22,9 @@
                 <MenuItem Header="Open image(s)" />
             </MenuItem>
         </Menu>
-        <components:WebcamSequence Grid.Row="1" Grid.Column="0" />
+        <components:WebcamSequence x:Name="WebcamSelector" Grid.Row="1" Grid.Column="0" WebcamSelected="WebcamSelector_WebcamSelected"/>
         <Border Name="VideoBorder" Grid.Row="2" Grid.Column="0" BorderBrush="Black" BorderThickness="1" Background="LightGray" Margin="5, 5, 5, 5">
-            <Label Name="BlankMark_1">No Module</Label>
+            <Image x:Name="MainScreen" />
         </Border>
     </Grid>
 </Window>
