@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy &quot;$(ProjectDir)\..\lib\OpenFace\&quot; &quot;$(ProjectDir)$(OutDir)&quot; /e /d /y /i /r" />
+    <Exec Command="xcopy &quot;$(ProjectDir)..\lib\OpenFace\&quot; &quot;$(ProjectDir)$(OutDir)&quot; /e /d /y /i /r" />
   </Target>
 
 </Project>

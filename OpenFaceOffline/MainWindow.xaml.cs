@@ -51,6 +51,18 @@ using UtilitiesOF;
 
 namespace OpenFaceOffline
 {
+    public struct FacePose
+    {
+        public float x;
+        public float y;
+        public float z;
+
+        public float yaw;
+        public float roll;
+        public float pitch;
+    }
+    public delegate void OnPoseChangedAction(Window sender, FacePose pose);
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -144,6 +156,12 @@ namespace OpenFaceOffline
         // Camera calibration parameters
         public float fx = -1, fy = -1, cx = -1, cy = -1;
 
+
+        // -----------------------------------------------------------------
+        // Custom Members
+        // -----------------------------------------------------------------
+        public event OnPoseChangedAction? OnPoseChanged;
+        
         public MainWindow()
         {
             InitializeComponent();
@@ -171,7 +189,6 @@ namespace OpenFaceOffline
             landmark_detector = new CLNF(face_model_params);
 
             gaze_analyser = new GazeAnalyserManaged();
-
         }
 
         // ----------------------------------------------------------
@@ -577,9 +594,9 @@ namespace OpenFaceOffline
 
                 if (ShowGeometry)
                 {
-                    int yaw = (int)(pose[4] * 180 / Math.PI + 0.5);
-                    int roll = (int)(pose[5] * 180 / Math.PI + 0.5);
-                    int pitch = (int)(pose[3] * 180 / Math.PI + 0.5);
+                    float yaw = pose[4] * 180f / (float)(Math.PI + 0.5);
+                    float roll = pose[5] * 180f / (float)(Math.PI + 0.5);
+                    float pitch = pose[3] * 180f / (float)(Math.PI + 0.5);
 
                     YawLabel.Content = yaw + "°";
                     RollLabel.Content = roll + "°";
@@ -590,6 +607,14 @@ namespace OpenFaceOffline
                     ZPoseLabel.Content = (int)pose[2] + " mm";
 
                     nonRigidGraph.Update(non_rigid_params);
+                    OnPoseChanged?.Invoke(this, new FacePose() {
+                        x = pose[0],
+                        y = pose[1],
+                        z = pose[2],
+                        yaw = yaw,
+                        roll = roll,
+                        pitch = pitch
+                    });
 
                     // Update eye gaze
                     String x_angle = String.Format("{0:F0}°", gaze_angle.Item1 * (180.0 / Math.PI));

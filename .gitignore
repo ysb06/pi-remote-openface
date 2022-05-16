@@ -267,3 +267,6 @@ _NCrunch*
 .vs/
 .vscode/
 *.code-workspace
+
+# App Generated Folder
+[Pp]rocessed/
