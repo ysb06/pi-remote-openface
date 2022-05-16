@@ -58,92 +58,18 @@
 
 using System;
 using System.Collections.Generic;
+using System.Configuration;
+using System.Data;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace OpenFaceOffline
 {
     /// <summary>
-    /// Interaction logic for TextEntryWindow.xaml
+    /// Interaction logic for App.xaml
     /// </summary>
-    public partial class NumberEntryWindow : Window
+    public partial class App : Application
     {
-        public NumberEntryWindow(int initValue)
-        {
-            InitializeComponent();
-            ResponseTextBox_x.Text = initValue.ToString();
-            ResponseTextBox_y.Text = initValue.ToString();
-            OutputInt = initValue;
-            this.KeyDown += new KeyEventHandler(TextEntry_KeyDown);
-
-        }
-
-        //private string ResponseText_x
-        //{
-        //    get { return ResponseTextBox_x.Text; }
-        //    set { ResponseTextBox_x.Text = value; }
-        //}
-        //private string ResponseText_y
-        //{
-        //    get { return ResponseTextBox_y.Text; }
-        //    set { ResponseTextBox_y.Text = value; }
-        //}
-
-        public int OutputInt;
-
-        private void OKButton_Click(object sender, System.Windows.RoutedEventArgs e)
-        {
-            DialogResult = true;
-        }
-
-        private void TextEntry_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter)
-            {
-                DialogResult = true;
-            }
-        }
-
-        // Do not allow illegal characters like
-        private void ResponseTextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-
-            try
-            {
-                int OutputIntNew = Int32.Parse(ResponseTextBox_x.Text);
-                if(OutputIntNew > 0)
-                {
-                    OutputInt = OutputIntNew;
-                    warningLabel.Visibility = System.Windows.Visibility.Hidden;
-                }
-                else
-                {
-                    warningLabel.Visibility = System.Windows.Visibility.Visible;
-                    ResponseTextBox_x.Text = OutputInt.ToString();
-                    ResponseTextBox_x.SelectionStart = ResponseTextBox_x.Text.Length;
-
-                }
-            }
-            catch (FormatException)
-            {
-                ResponseTextBox_x.Text = OutputInt.ToString();
-                ResponseTextBox_x.SelectionStart = ResponseTextBox_x.Text.Length;
-                warningLabel.Visibility = System.Windows.Visibility.Visible;
-            }
-
-            ResponseTextBox_y.Text = OutputInt.ToString();
-
-        }
-
     }
 }

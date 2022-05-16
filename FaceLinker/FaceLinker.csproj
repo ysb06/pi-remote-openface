@@ -8,12 +8,12 @@
 	</PropertyGroup>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Exec Command="xcopy &quot;$(ProjectDir)\..\CommonLib\OpenFace\&quot; &quot;$(ProjectDir)$(OutDir)&quot; /e /d /y /i /r" />
+		<Exec Command="xcopy &quot;$(ProjectDir)\..\lib\OpenFace\&quot; &quot;$(ProjectDir)$(OutDir)&quot; /e /d /y /i /r" />
 	</Target>
 
 	<ItemGroup>
 	  <Reference Include="CppInerop">
-	    <HintPath>..\CommonLib\OpenFace\CppInerop.dll</HintPath>
+	    <HintPath>..\lib\OpenFace\CppInerop.dll</HintPath>
 	  </Reference>
 	</ItemGroup>
 

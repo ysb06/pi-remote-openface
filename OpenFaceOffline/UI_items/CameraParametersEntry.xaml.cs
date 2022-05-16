@@ -198,7 +198,7 @@ namespace OpenFaceOffline
 
                 }
             }
-            catch (FormatException except)
+            catch (FormatException)
             {
                 fxTextBox.Text = fx.ToString();
                 fyTextBox.Text = fy.ToString();

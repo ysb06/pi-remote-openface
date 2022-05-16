@@ -110,9 +110,9 @@ namespace FaceLinker.Analyzer
                 landmarks = model.CalculateAllLandmarks();
             }
 
-            List<Tuple<Point, Point>> lines = null;
-            List<Tuple<float, float>> eye_landmarks = null;
-            List<Tuple<Point, Point>> gaze_lines = null;
+            List<Tuple<Point, Point>>? lines = null;
+            List<Tuple<float, float>>? eye_landmarks = null;
+            List<Tuple<Point, Point>>? gaze_lines = null;
             Tuple<float, float> gaze_angle = new Tuple<float, float>(0, 0);
 
             List<float> pose = new List<float>();

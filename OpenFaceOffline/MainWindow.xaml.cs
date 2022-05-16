@@ -40,7 +40,6 @@ using System.Windows;
 using System.Windows.Threading;
 using System.Windows.Media.Imaging;
 using System.Windows.Controls;
-using Microsoft.WindowsAPICodePack.Dialogs;
 
 // Internal libraries
 using OpenCVWrappers;
@@ -79,12 +78,12 @@ namespace OpenFaceOffline
         // Members
         // -----------------------------------------------------------------
 
-        Thread processing_thread;
+        Thread? processing_thread;
 
         // Some members for displaying the results
-        private WriteableBitmap latest_img;
-        private WriteableBitmap latest_aligned_face;
-        private WriteableBitmap latest_HOG_descriptor;
+        private WriteableBitmap? latest_img;
+        private WriteableBitmap? latest_aligned_face;
+        private WriteableBitmap? latest_HOG_descriptor;
 
         // Managing the running of the analysis system
         private volatile bool thread_running;
@@ -96,7 +95,7 @@ namespace OpenFaceOffline
         FpsTracker processing_fps = new FpsTracker();
 
         // For selecting webcams
-        CameraSelection cam_sec;
+        CameraSelection? cam_sec;
 
         // For tracking
         FaceDetector face_detector;
@@ -104,7 +103,7 @@ namespace OpenFaceOffline
         CLNF landmark_detector;
 
         // For face analysis
-        FaceAnalyserManaged face_analyser;
+        FaceAnalyserManaged? face_analyser;
         GazeAnalyserManaged gaze_analyser;
 
         public bool RecordAligned { get; set; } = false; // Aligned face images
@@ -492,7 +491,9 @@ namespace OpenFaceOffline
             var landmarks_3d_eyes = landmark_detector.CalculateAllEyeLandmarks3D(fx, fy, cx, cy);
             recorder.SetObservationGaze(gaze.Item1, gaze.Item2, gaze_angle, landmarks_2d_eyes, landmarks_3d_eyes);
 
+#pragma warning disable CS8602 // null 가능 참조에 대한 역참조입니다.
             var au_regs = face_analyser.GetCurrentAUsReg();
+#pragma warning restore CS8602 // null 가능 참조에 대한 역참조입니다.
             var au_classes = face_analyser.GetCurrentAUsClass();
             recorder.SetObservationActionUnits(au_regs, au_classes);
 
@@ -515,9 +516,9 @@ namespace OpenFaceOffline
             bool new_image, bool multi_face, float fx, float fy, float cx, float cy, double progress)
         {
 
-            List<Tuple<Point, Point>> lines = null;
-            List<Tuple<float, float>> eye_landmarks = null;
-            List<Tuple<Point, Point>> gaze_lines = null;
+            List<Tuple<Point, Point>>? lines = null;
+            List<Tuple<float, float>>? eye_landmarks = null;
+            List<Tuple<Point, Point>>? gaze_lines = null;
             Tuple<float, float> gaze_angle = new Tuple<float, float>(0, 0);
 
             List<float> pose = new List<float>();
@@ -538,7 +539,9 @@ namespace OpenFaceOffline
             {
                 visualizer.SetImage(frame, fx, fy, cx, cy);
             }
+            #pragma warning disable CS8602 // null 가능 참조에 대한 역참조입니다.
             visualizer.SetObservationHOG(face_analyser.GetLatestHOGFeature(), face_analyser.GetHOGRows(), face_analyser.GetHOGCols());
+            #pragma warning restore CS8602 // null 가능 참조에 대한 역참조입니다.
             visualizer.SetObservationLandmarks(landmarks, confidence, visibilities);
             visualizer.SetObservationPose(pose, confidence);
             visualizer.SetObservationGaze(gaze_analyser.GetGazeCamera().Item1, gaze_analyser.GetGazeCamera().Item2, landmark_detector.CalculateAllEyeLandmarks(), landmark_detector.CalculateAllEyeLandmarks3D(fx, fy, cx, cy), confidence);
@@ -677,7 +680,7 @@ namespace OpenFaceOffline
         // Disable GUI components that should not be active during processing
         private void SetupFeatureExtractionMode()
         {
-            Dispatcher.Invoke((Action)(() =>
+            Dispatcher.Invoke(() =>
             {
                 SettingsMenu.IsEnabled = false;
                 RecordingMenu.IsEnabled = false;
@@ -689,7 +692,7 @@ namespace OpenFaceOffline
                 StopButton.IsEnabled = true;
                 NextFiveFramesButton.IsEnabled = false;
                 NextFrameButton.IsEnabled = false;
-            }));
+            });
         }
 
         // When the processing is done re-enable the components
@@ -703,7 +706,7 @@ namespace OpenFaceOffline
             {
                 Dispatcher.Invoke(DispatcherPriority.Render, new TimeSpan(0, 0, 0, 0, 200), (Action)(() =>
                 {
-                    PauseButton_Click(null, null);
+                    PauseButton_Click(this, new RoutedEventArgs());
                 }));
             }
 
@@ -1063,10 +1066,10 @@ namespace OpenFaceOffline
         // Making sure only one radio button is selected
         private void MenuItemWithRadioButtons_Click(object sender, System.Windows.RoutedEventArgs e)
         {
-            MenuItem mi = sender as MenuItem;
+            MenuItem? mi = sender as MenuItem;
             if (mi != null)
             {
-                RadioButton rb = mi.Icon as RadioButton;
+                RadioButton? rb = mi.Icon as RadioButton;
                 if (rb != null)
                 {
                     rb.IsChecked = true;
@@ -1076,20 +1079,13 @@ namespace OpenFaceOffline
 
         private void OutputLocationItem_Click(object sender, RoutedEventArgs e)
         {
-            var dlg = new CommonOpenFileDialog();
-            dlg.Title = "Select output directory";
-            dlg.IsFolderPicker = true;
-            dlg.AllowNonFileSystemItems = false;
-            dlg.EnsureFileExists = true;
-            dlg.EnsurePathExists = true;
-            dlg.EnsureReadOnly = false;
-            dlg.EnsureValidNames = true;
-            dlg.Multiselect = false;
-            dlg.ShowPlacesList = true;
+            var dlg = new System.Windows.Forms.FolderBrowserDialog();
+            dlg.Description = "Select output directory";
+            dlg.UseDescriptionForTitle = true;
 
-            if (dlg.ShowDialog() == CommonFileDialogResult.Ok)
+            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                var folder = dlg.FileName;
+                var folder = dlg.SelectedPath;
                 record_root = folder;
             }
         }
