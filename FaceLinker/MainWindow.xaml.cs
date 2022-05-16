@@ -29,6 +29,7 @@ namespace FaceLinker
         private void WebcamSelector_WebcamSelected(WebcamSequence sender, Webcam selection)
         {
             selection.SetActiveTarget(MainScreen);
+            selection.ActivateSequence();
         }
     }
 }

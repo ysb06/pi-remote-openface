@@ -15,6 +15,7 @@ using System.Windows.Shapes;
 using System.Diagnostics;
 using OpenCVWrappers;
 using UtilitiesOF;
+using System.Threading;
 
 
 namespace FaceLinker.Components
@@ -24,7 +25,8 @@ namespace FaceLinker.Components
     /// </summary>
     public partial class WebcamSequence : UserControl
     {
-        public event WebcamSelectedEventHandler WebcamSelected;
+        public event WebcamSelectedEventHandler? WebcamSelected;
+        public event EventHandler? WebcamReloadRequested;
 
         internal Webcam? CurrentSelectedWebcam
         {
@@ -44,11 +46,13 @@ namespace FaceLinker.Components
         {
             InitializeComponent();
 
-            ReloadCameras();
+            ReloadCameras();   
         }
 
         private void ReloadButton_Click(object sender, RoutedEventArgs e)
         {
+            WebcamReloadRequested?.Invoke(this, new EventArgs());
+            
             ReloadCameras();
         }
 

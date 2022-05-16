@@ -22,7 +22,7 @@
                 <MenuItem Header="Open image(s)" />
             </MenuItem>
         </Menu>
-        <components:WebcamSequence x:Name="WebcamSelector" Grid.Row="1" Grid.Column="0" WebcamSelected="WebcamSelector_WebcamSelected"/>
+        <components:WebcamSequence x:Name="WebcamSelector" Grid.Row="1" Grid.Column="0" WebcamSelected="WebcamSelector_WebcamSelected" />
         <Border Name="VideoBorder" Grid.Row="2" Grid.Column="0" BorderBrush="Black" BorderThickness="1" Background="LightGray" Margin="5, 5, 5, 5">
             <Image x:Name="MainScreen" />
         </Border>
