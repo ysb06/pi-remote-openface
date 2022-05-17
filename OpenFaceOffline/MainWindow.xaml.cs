@@ -49,6 +49,8 @@ using GazeAnalyser_Interop;
 using FaceDetectorInterop;
 using UtilitiesOF;
 
+using OpenFaceOffline.Components;
+
 namespace OpenFaceOffline
 {
     public struct FacePose
@@ -61,7 +63,7 @@ namespace OpenFaceOffline
         public float roll;
         public float pitch;
     }
-    public delegate void OnPoseChangedAction(Window sender, FacePose pose);
+    public delegate void OnPoseChangedAction(MainWindow sender, FacePose pose);
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -161,18 +163,22 @@ namespace OpenFaceOffline
         // Custom Members
         // -----------------------------------------------------------------
         public event OnPoseChangedAction? OnPoseChanged;
-        
+
+        public bool IsFaceAnalysisActive { 
+            get { return processing_thread == null? false : processing_thread.IsAlive; } 
+        }
+
         public MainWindow()
         {
             InitializeComponent();
-            this.DataContext = this; // For WPF data binding
+            DataContext = this; // For WPF data binding
 
             // Set the icon
             Uri iconUri = new Uri("logo1.ico", UriKind.RelativeOrAbsolute);
-            this.Icon = BitmapFrame.Create(iconUri);
+            Icon = BitmapFrame.Create(iconUri);
 
-            String root = AppDomain.CurrentDomain.BaseDirectory;
-                        
+            string root = AppDomain.CurrentDomain.BaseDirectory;
+
             face_model_params = new FaceModelParameters(root, LandmarkDetectorCECLM, LandmarkDetectorCLNF, LandmarkDetectorCLM);
             // Initialize the face detector
             face_detector = new FaceDetector(face_model_params.GetHaarLocation(), face_model_params.GetMTCNNLocation());
@@ -195,7 +201,7 @@ namespace OpenFaceOffline
         // Actual work gets done here
 
         // Wrapper for processing multiple sequences
-        private void ProcessSequences(List<String> filenames)
+        private void ProcessSequences(List<string> filenames)
         {
             for (int i = 0; i < filenames.Count; ++i)
             {
@@ -214,6 +220,11 @@ namespace OpenFaceOffline
         // The main function call for processing sequences
         private void ProcessSequence(SequenceReader reader)
         {
+            Dispatcher.BeginInvoke(() =>
+            {
+                ScanerLinker linkerWindow = new ScanerLinker(this);
+                linkerWindow.Show();
+            });
             Thread.CurrentThread.Priority = ThreadPriority.Highest;
 
             SetupFeatureExtractionMode();
@@ -223,7 +234,7 @@ namespace OpenFaceOffline
             // Reload the face landmark detector if needed
             ReloadLandmarkDetector();
 
-            if(!landmark_detector.isLoaded())
+            if (!landmark_detector.isLoaded())
             {
                 DetectorNotFoundWarning();
                 EndMode();
@@ -264,13 +275,13 @@ namespace OpenFaceOffline
             while (!gray_frame.IsEmpty)
             {
 
-                if(!thread_running)
+                if (!thread_running)
                 {
                     break;
                 }
 
                 double progress = reader.GetProgress();
-                
+
                 bool detection_succeeding = landmark_detector.DetectLandmarksInVideo(frame, face_model_params, gray_frame);
 
                 // The face analysis step (for AUs and eye gaze)
@@ -284,8 +295,8 @@ namespace OpenFaceOffline
                 // Record an observation
                 RecordObservation(recorder, visualizer_of.GetVisImage(), 0, detection_succeeding, reader.GetFx(), reader.GetFy(), reader.GetCx(), reader.GetCy(), reader.GetTimestamp(), reader.GetFrameNumber());
 
-                if(RecordTracked)
-                { 
+                if (RecordTracked)
+                {
                     recorder.WriteObservationTracked();
                 }
 
@@ -308,8 +319,8 @@ namespace OpenFaceOffline
             recorder.Close();
 
             // Post-process the AU recordings
-            if(RecordAUs)
-            { 
+            if (RecordAUs)
+            {
                 face_analyser.PostProcessOutputFile(recorder.GetCSVFile());
             }
 
@@ -317,7 +328,7 @@ namespace OpenFaceOffline
             reader.Close();
 
             EndMode();
-
+            OnPoseChanged?.Invoke(this, new FacePose());
         }
 
         private void ProcessIndividualImages(ImageReader reader)
@@ -383,15 +394,15 @@ namespace OpenFaceOffline
                 // Detect faces here and return bounding boxes
                 List<Rect> face_detections = new List<Rect>();
                 List<float> confidences = new List<float>();
-                if(DetectorHOG)
+                if (DetectorHOG)
                 {
                     face_detector.DetectFacesHOG(face_detections, gray_frame, confidences);
                 }
-                else if(DetectorCNN)
-                { 
+                else if (DetectorCNN)
+                {
                     face_detector.DetectFacesMTCNN(face_detections, frame, confidences);
                 }
-                else if(DetectorHaar)
+                else if (DetectorHaar)
                 {
                     face_detector.DetectFacesHaar(face_detections, gray_frame, confidences);
                 }
@@ -404,7 +415,7 @@ namespace OpenFaceOffline
                     bool detection_succeeding = landmark_detector.DetectFaceLandmarksInImage(frame, face_detections[i], face_model_params, gray_frame);
 
                     var landmarks = landmark_detector.CalculateAllLandmarks();
-                    
+
                     // Predict action units
                     var au_preds = face_analyser.PredictStaticAUsAndComputeFeatures(frame, landmarks);
 
@@ -425,8 +436,8 @@ namespace OpenFaceOffline
                 gray_frame = reader.GetCurrentFrameGray();
 
                 // Write out the tracked image
-                if(RecordTracked)
-                { 
+                if (RecordTracked)
+                {
                     recorder.WriteObservationTracked();
                 }
 
@@ -437,7 +448,7 @@ namespace OpenFaceOffline
 
                 lastFrameTime = CurrentTime;
                 processing_fps.AddFrame();
-                
+
                 // TODO how to report errors from the reader here? exceptions? logging? Problem for future versions?
             }
 
@@ -453,7 +464,7 @@ namespace OpenFaceOffline
             {
                 reload = true;
             }
-            else if(face_model_params.IsCLNF() && !LandmarkDetectorCLNF)
+            else if (face_model_params.IsCLNF() && !LandmarkDetectorCLNF)
             {
                 reload = true;
             }
@@ -462,7 +473,7 @@ namespace OpenFaceOffline
                 reload = true;
             }
 
-            if(reload)
+            if (reload)
             {
                 String root = AppDomain.CurrentDomain.BaseDirectory;
 
@@ -518,7 +529,7 @@ namespace OpenFaceOffline
             recorder.SetObservationFrameNumber(frame_number);
 
             recorder.SetObservationFaceAlign(face_analyser.GetLatestAlignedFace());
-            
+
             var hog_feature = face_analyser.GetLatestHOGFeature();
             recorder.SetObservationHOG(success, hog_feature, face_analyser.GetHOGRows(), face_analyser.GetHOGCols(), face_analyser.GetHOGChannels());
 
@@ -529,7 +540,7 @@ namespace OpenFaceOffline
 
         }
 
-        private void VisualizeFeatures(RawImage frame, Visualizer visualizer, List<Tuple<float, float>> landmarks, List<bool> visibilities, bool detection_succeeding, 
+        private void VisualizeFeatures(RawImage frame, Visualizer visualizer, List<Tuple<float, float>> landmarks, List<bool> visibilities, bool detection_succeeding,
             bool new_image, bool multi_face, float fx, float fy, float cx, float cy, double progress)
         {
 
@@ -556,9 +567,9 @@ namespace OpenFaceOffline
             {
                 visualizer.SetImage(frame, fx, fy, cx, cy);
             }
-            #pragma warning disable CS8602 // null 가능 참조에 대한 역참조입니다.
+#pragma warning disable CS8602 // null 가능 참조에 대한 역참조입니다.
             visualizer.SetObservationHOG(face_analyser.GetLatestHOGFeature(), face_analyser.GetHOGRows(), face_analyser.GetHOGCols());
-            #pragma warning restore CS8602 // null 가능 참조에 대한 역참조입니다.
+#pragma warning restore CS8602 // null 가능 참조에 대한 역참조입니다.
             visualizer.SetObservationLandmarks(landmarks, confidence, visibilities);
             visualizer.SetObservationPose(pose, confidence);
             visualizer.SetObservationGaze(gaze_analyser.GetGazeCamera().Item1, gaze_analyser.GetGazeCamera().Item2, landmark_detector.CalculateAllEyeLandmarks(), landmark_detector.CalculateAllEyeLandmarks3D(fx, fy, cx, cy), confidence);
@@ -607,7 +618,8 @@ namespace OpenFaceOffline
                     ZPoseLabel.Content = (int)pose[2] + " mm";
 
                     nonRigidGraph.Update(non_rigid_params);
-                    OnPoseChanged?.Invoke(this, new FacePose() {
+                    OnPoseChanged?.Invoke(this, new FacePose()
+                    {
                         x = pose[0],
                         y = pose[1],
                         z = pose[2],
@@ -641,7 +653,7 @@ namespace OpenFaceOffline
                     overlay_image.FaceScale.Add(scale);
 
                     // Update results even if it is not succeeding when in multi-face mode
-                    if(detection_succeeding || multi_face)
+                    if (detection_succeeding || multi_face)
                     {
 
                         List<Point> landmark_points = new List<Point>();
@@ -751,7 +763,7 @@ namespace OpenFaceOffline
 
                 // Clean up the interface itself
                 overlay_image.Source = null;
-                
+
                 auClassGraph.Update(new Dictionary<string, double>());
                 auRegGraph.Update(new Dictionary<string, double>());
                 YawLabel.Content = "0°";
@@ -766,7 +778,7 @@ namespace OpenFaceOffline
 
                 GazeXLabel.Content = "0°";
                 GazeYLabel.Content = "0°";
-                
+
                 AlignedFace.Source = null;
                 AlignedHOG.Source = null;
 
@@ -814,7 +826,7 @@ namespace OpenFaceOffline
                 {
                     to_return = fbd.SelectedPath;
                 }
-                else if(!string.IsNullOrWhiteSpace(fbd.SelectedPath))
+                else if (!string.IsNullOrWhiteSpace(fbd.SelectedPath))
                 {
                     string messageBoxText = "Could not open the directory.";
                     string caption = "Invalid directory";
@@ -866,8 +878,8 @@ namespace OpenFaceOffline
 
             var image_files = openMediaDialog(true);
 
-            if(image_files.Count > 0)
-            { 
+            if (image_files.Count > 0)
+            {
                 ImageReader reader = new ImageReader(image_files, fx, fy, cx, cy);
 
                 processing_thread = new Thread(() => ProcessIndividualImages(reader));
@@ -878,13 +890,13 @@ namespace OpenFaceOffline
         // Selecting a directory containing images
         private void individualImageDirectoryOpenClick(object sender, RoutedEventArgs e)
         {
-            
+
             // First clean up existing tracking
             StopTracking();
 
             string directory = openDirectory();
-            if(!string.IsNullOrWhiteSpace(directory))
-            { 
+            if (!string.IsNullOrWhiteSpace(directory))
+            {
                 ImageReader reader = new ImageReader(directory, fx, fy, cx, cy);
 
                 processing_thread = new Thread(() => ProcessIndividualImages(reader));
@@ -925,7 +937,6 @@ namespace OpenFaceOffline
                 processing_thread = new Thread(() => ProcessSequence(reader));
                 processing_thread.Name = "Webcam processing";
                 processing_thread.Start();
-
             }
         }
 
@@ -1000,52 +1011,52 @@ namespace OpenFaceOffline
             // Collapsing or restoring the windows here
             if (!ShowTrackedVideo)
             {
-                VideoBorder.Visibility = System.Windows.Visibility.Collapsed;
+                VideoBorder.Visibility = Visibility.Collapsed;
                 MainGrid.ColumnDefinitions[0].Width = new GridLength(0, GridUnitType.Star);
             }
             else
             {
-                VideoBorder.Visibility = System.Windows.Visibility.Visible;
+                VideoBorder.Visibility = Visibility.Visible;
                 MainGrid.ColumnDefinitions[0].Width = new GridLength(2.1, GridUnitType.Star);
             }
 
             if (!ShowAppearance)
             {
-                AppearanceBorder.Visibility = System.Windows.Visibility.Collapsed;
+                AppearanceBorder.Visibility = Visibility.Collapsed;
                 MainGrid.ColumnDefinitions[1].Width = new GridLength(0, GridUnitType.Star);
             }
             else
             {
-                AppearanceBorder.Visibility = System.Windows.Visibility.Visible;
+                AppearanceBorder.Visibility = Visibility.Visible;
                 MainGrid.ColumnDefinitions[1].Width = new GridLength(0.8, GridUnitType.Star);
             }
 
             // Collapsing or restoring the windows here
             if (!ShowGeometry)
             {
-                GeometryBorder.Visibility = System.Windows.Visibility.Collapsed;
+                GeometryBorder.Visibility = Visibility.Collapsed;
                 MainGrid.ColumnDefinitions[2].Width = new GridLength(0, GridUnitType.Star);
             }
             else
             {
-                GeometryBorder.Visibility = System.Windows.Visibility.Visible;
+                GeometryBorder.Visibility = Visibility.Visible;
                 MainGrid.ColumnDefinitions[2].Width = new GridLength(1.0, GridUnitType.Star);
             }
 
             // Collapsing or restoring the windows here
             if (!ShowAUs)
             {
-                ActionUnitBorder.Visibility = System.Windows.Visibility.Collapsed;
+                ActionUnitBorder.Visibility = Visibility.Collapsed;
                 MainGrid.ColumnDefinitions[3].Width = new GridLength(0, GridUnitType.Star);
             }
             else
             {
-                ActionUnitBorder.Visibility = System.Windows.Visibility.Visible;
+                ActionUnitBorder.Visibility = Visibility.Visible;
                 MainGrid.ColumnDefinitions[3].Width = new GridLength(1.6, GridUnitType.Star);
             }
 
         }
-       
+
         private void setOutputImageSize_Click(object sender, RoutedEventArgs e)
         {
 
@@ -1070,6 +1081,19 @@ namespace OpenFaceOffline
             }
             ((MenuItem)sender).IsChecked = true;
 
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            OnPoseChanged?.Invoke(this, new FacePose()
+            {
+                x = 0,
+                y = 0,
+                z = 0,
+                yaw = 0,
+                roll = 0,
+                pitch = 0
+            });
         }
 
         private void setCameraParameters_Click(object sender, RoutedEventArgs e)
@@ -1114,7 +1138,5 @@ namespace OpenFaceOffline
                 record_root = folder;
             }
         }
-
     }
-
 }

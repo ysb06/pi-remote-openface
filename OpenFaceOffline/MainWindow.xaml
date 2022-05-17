@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:OpenFaceOffline"
         xmlns:OpenFaceOffline="clr-namespace:OpenFaceOffline"
         mc:Ignorable="d"
-        Title="OpenFace offline" Height="500" Width="1300" MinWidth="700" MinHeight="350" Closing="Window_Closing" WindowStartupLocation="CenterScreen">
+        Title="OpenFace offline" Height="500" Width="1300" MinWidth="700" MinHeight="350" Closing="Window_Closing" WindowStartupLocation="CenterScreen" Loaded="Window_Loaded">
     <Grid Name="MainGrid">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2.1*"/>
