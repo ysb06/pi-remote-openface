@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Diagnostics;
 using System.Net.Sockets;
+using System.Net;
 
 namespace OpenFaceOffline.Components
 {
@@ -21,10 +22,42 @@ namespace OpenFaceOffline.Components
     /// </summary>
     public partial class ScanerLinker : Window
     {
+        private struct UdpState
+        {
+            public UdpClient agent;
+            public IPEndPoint myIep;
+            public async Task SendMessage(IPEndPoint? remoteIep, double value)
+            {
+                if (remoteIep != null)
+                {
+                    var data = BitConverter.GetBytes(value);
+                    await agent.SendAsync(data, data.Length, remoteIep);
+                }
+                else
+                {
+                    Debug.WriteLine("IP endpoint is null");
+                }
+            }
+
+            public async Task SendMessage(IPEndPoint? remoteIep, byte[] message)
+            {
+                if (remoteIep != null)
+                {
+                    // Debug.WriteLine($"Sending[{remoteIep}]...{message.Length}");
+                    await agent.SendAsync(message, message.Length, remoteIep);
+                }
+                else
+                {
+                    Debug.WriteLine("IP endpoint is null");
+                }
+            }
+        }
+
         private static ScanerLinker? CurrentWindow = null;
 
         private MainWindow parent;
-        private UdpClient? RtGateway;
+
+        public FacePose CurrentPose { get; private set; } = new FacePose();
 
         public ScanerLinker(MainWindow parent)
         {
@@ -51,6 +84,8 @@ namespace OpenFaceOffline.Components
 
         public void OnPoseChanged(MainWindow sender, FacePose pose)
         {
+            CurrentPose = pose;
+
             Dispatcher.BeginInvoke(() =>
             {
                 FaceDetectionStateLabel.Content = sender.IsFaceAnalysisActive ? "Running" : "Stopped";
@@ -59,8 +94,47 @@ namespace OpenFaceOffline.Components
 
         private void RTGatewayConnectButton_Click(object sender, RoutedEventArgs e)
         {
-            RtGateway = new UdpClient();
-            // UDP 연결 코드 작성
+            if (int.TryParse(PortTextbox.Text, out int port) && IPAddress.TryParse(IpTextbox.Text, out IPAddress? ip))
+            {
+                Debug.WriteLine($"Connecting to {ip}:{port}...");
+                UdpState state = new UdpState()
+                {
+                    agent = new UdpClient(),
+                    myIep = new IPEndPoint(ip, port)
+                };
+                state.agent.Client.Bind(state.myIep);
+                state.agent.BeginReceive(OnReceiveRtGatewayMessage, state);
+                Debug.WriteLine("Receiving...");
+
+                IpTextbox.IsEnabled = false;
+                PortTextbox.IsEnabled = false;
+                RTGatewayConnectButton.IsEnabled = false;
+            }
+        }
+
+        private async void OnReceiveRtGatewayMessage(IAsyncResult ar)
+        {
+            if (ar.AsyncState != null)
+            {
+                UdpState resultState = (UdpState)ar.AsyncState;
+                UdpClient agent = resultState.agent;
+                IPEndPoint myIep = resultState.myIep;
+                IPEndPoint? remoteEp = null;
+
+                byte[] receivedBytes = agent.EndReceive(ar, ref remoteEp);
+                // Debug.WriteLine($"Sending[{remoteEp}]: {data.Length}...");
+                await resultState.SendMessage(remoteEp, CurrentPose.ToByteArray());
+
+                await Dispatcher.BeginInvoke(() =>
+                {
+                    RtGatewayStateLabel.Content = (agent.Client.Connected).ToString();
+                });
+                agent.BeginReceive(OnReceiveRtGatewayMessage, ar.AsyncState);
+            }
+            else
+            {
+                Debug.Assert(false, "Unknown Error");
+            }
         }
     }
 }

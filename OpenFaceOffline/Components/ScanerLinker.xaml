@@ -27,6 +27,7 @@
                 <Label Grid.Column="0" Grid.Row="0" Content="Face Detection: " />
                 <Label x:Name="FaceDetectionStateLabel" Grid.Column="1" Grid.Row="0" Content="Unknwon" />
                 <Label Grid.Column="0" Grid.Row="1" Content="RT Gateway (UDP): " />
+                <Label x:Name="RtGatewayStateLabel" Grid.Column="1" Grid.Row="1" Content="Unknwon" />
             </Grid>
         </GroupBox>
         <GroupBox x:Name="groupBox1" Header="SCANeR RT Gateway" Grid.Column="0" Grid.Row="1">
@@ -42,9 +43,9 @@
                 </Grid.RowDefinitions>
 
                 <Label Content="IP" Grid.Row="0" Grid.Column="0" Margin="5"/>
-                <TextBox Grid.Row="0" Grid.Column="1" Margin="5" />
+                <TextBox x:Name="IpTextbox" Grid.Row="0" Grid.Column="1" Margin="5" Text="0.0.0.0" />
                 <Label Content="Port" Grid.Row="1" Grid.Column="0" Margin="5" />
-                <TextBox Grid.Row="1" Grid.Column="1" Margin="5" />
+                <TextBox x:Name="PortTextbox"  Grid.Row="1" Grid.Column="1" Margin="5" Text="65001" />
                 <Button x:Name="RTGatewayConnectButton" Content="Connect" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="5" Click="RTGatewayConnectButton_Click" />
             </Grid>
         </GroupBox>

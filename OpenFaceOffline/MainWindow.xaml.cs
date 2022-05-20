@@ -60,8 +60,28 @@ namespace OpenFaceOffline
         public float z;
 
         public float yaw;
-        public float roll;
         public float pitch;
+        public float roll;
+        
+
+        public byte[] ToByteArray()
+        {
+            byte[] target = new byte[48];
+
+            BitConverter.GetBytes((double)x).CopyTo(target, 0);
+            BitConverter.GetBytes((double)y).CopyTo(target, 8);
+            BitConverter.GetBytes((double)z).CopyTo(target, 16);
+            BitConverter.GetBytes((double)yaw).CopyTo(target, 24);
+            BitConverter.GetBytes((double)pitch).CopyTo(target, 32);
+            BitConverter.GetBytes((double)roll).CopyTo(target, 40);
+
+            return target;
+        }
+
+        public override string ToString()
+        {
+            return $"{x}, {y}, {z}, {yaw}, {pitch}, {roll}";
+        }
     }
     public delegate void OnPoseChangedAction(MainWindow sender, FacePose pose);
 
@@ -164,8 +184,9 @@ namespace OpenFaceOffline
         // -----------------------------------------------------------------
         public event OnPoseChangedAction? OnPoseChanged;
 
-        public bool IsFaceAnalysisActive { 
-            get { return processing_thread == null? false : processing_thread.IsAlive; } 
+        public bool IsFaceAnalysisActive
+        {
+            get { return processing_thread == null ? false : processing_thread.IsAlive; }
         }
 
         public MainWindow()
@@ -606,12 +627,12 @@ namespace OpenFaceOffline
                 if (ShowGeometry)
                 {
                     float yaw = pose[4] * 180f / (float)(Math.PI + 0.5);
-                    float roll = pose[5] * 180f / (float)(Math.PI + 0.5);
                     float pitch = pose[3] * 180f / (float)(Math.PI + 0.5);
+                    float roll = pose[5] * 180f / (float)(Math.PI + 0.5);
 
                     YawLabel.Content = yaw + "°";
-                    RollLabel.Content = roll + "°";
                     PitchLabel.Content = pitch + "°";
+                    RollLabel.Content = roll + "°";
 
                     XPoseLabel.Content = (int)pose[0] + " mm";
                     YPoseLabel.Content = (int)pose[1] + " mm";
